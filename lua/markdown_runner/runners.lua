@@ -5,18 +5,27 @@ local function run_go(block)
   local tmp = vim.fn.tempname() .. ".go"
   local src = table.concat(block.src, "\n")
 
-  if not string.match(src, "^func main") then
-    src = "func main() {\n" .. src .. "\n}"
-  end
-
   if not string.match(src, "^package") then
-    src = "package main\n" .. src
+	  if not string.match(src, "^func main") then
+	    src = "func main() {\n" .. src .. "\n}"
+	  end
+         src = "package main\n" .. src
   end
 
   vim.fn.writefile(vim.split(src, "\n"), tmp)
-  vim.fn.system("goimports -w " .. tmp, block.src)
-  local stdout = vim.fn.system("go run " .. tmp, block.src)
-  vim.fn.delete(tmp)
+  local dir = util.getPath(tmp)
+  local filename = tmp:gsub(dir, "")
+  print("caller dir: " .. block.meta.caller_dir)
+  print("dir = " .. dir)
+  print("filename = " .. filename)
+  vim.fn.system("cp " .. "go.mod " .. dir)
+  local cmd = "bash -c \"cd " .. dir .." && export GOROOT=~/go && go mod download && go mod tidy && goimports -w " .. filename .. " \"", block.src
+  print("cmd = " .. cmd)
+  print(vim.fn.system(cmd))
+  cmd = "bash -c \"cd " .. dir .. " && go run " .. filename .. "\""
+  print("cmd = " .. cmd)
+  local stdout = vim.fn.system(cmd)
+  -- vim.fn.delete(tmp)
 
   return stdout
 end
