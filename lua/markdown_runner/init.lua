@@ -3,6 +3,7 @@ local api = vim.api
 local util = require "markdown_runner.util"
 local parser = require "markdown_runner.parser"
 local runners = require "markdown_runner.runners"
+local collector = require "markdown_runner.collect"
 
 local function get_runner(block)
   local lookup = vim.tbl_extend("force", runners, vim.g.markdown_runners or {})
@@ -151,5 +152,5 @@ end
 return {
   echo=wrap_handle_error(echo),
   insert=wrap_handle_error(insert),
-  clear_cache=wrap_handle_error(clear_cache)
+  clear_cache=wrap_handle_error(clear_cache),
 }

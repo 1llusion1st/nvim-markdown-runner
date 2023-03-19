@@ -65,6 +65,15 @@ COMMANDS                                            *markdown-runner-commands*
   
     Clears the cookie jar file used by the REST client integration.
 
+:MarkdownCollect                                             *:MarkdownCollect*
+
+    Params:
+        path=. lang=go package=exported
+
+    Collects code blocks into specified in sources comments. Also supports
+    parsing curl queries, converting json requests/responses to language types
+    
+
 
 ==============================================================================
 OPTIONS                                              *markdown-runner-options*
