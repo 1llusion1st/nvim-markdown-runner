@@ -2,6 +2,7 @@ local api = vim.api
 local util = require "markdown_runner.util"
 local json2gostruct = require "json2gostruct"
 local go_parser = require "markdown_runner.go_parser"
+local bash_parser = require "markdown_runner.bash_parser"
 
 local collector = {}
 
@@ -27,6 +28,7 @@ function collector.collect(params)
     process_request(generated, imports, request)
   end
   api.nvim_command("vnew")
+  api.nvim_command("set syntax=go")
   local new_buffer = api.nvim_get_current_buf()
   table.insert(lines, "package generated")
   table.insert(lines, "")
@@ -55,7 +57,7 @@ function process_request(generated, imports, request)
   if base_code_block.code_lang == "go" then
     process_request_go(generated, imports, request)
   elseif base_code_block.code_lang == "bash" then
-    -- process_request_bash(generated, request)
+    process_request_bash(generated, request)
   else
     local code_lang = string.format("%s", base_code_block.code_lang)
     table.insert(generated, "// unsupported code-block type: " .. code_lang .. " for request id: " .. base_code_block.meta.id)
@@ -68,7 +70,7 @@ function process_request_go(generated, imports, request)
   local base_code_block = request[1]
   local block_imports, code = go_parser.parse(base_code_block.code_block, true)
   for _, import in ipairs(block_imports) do
-    table.insert(imports, import)
+    table.insert(imports, "\t" .. import)
   end
   table.insert(generated, string.format("// %s", base_code_block.meta.id))
   for _, code_line in ipairs(vim.split(code, "\n")) do
@@ -78,6 +80,72 @@ function process_request_go(generated, imports, request)
 end
 
 function process_request_bash(generated, request)
+  print("PROCESSING BASH !!!!!!!!!!!")
+  local base_code_block = request[1]
+  local curl_path, curl_json = bash_parser.find_curl_command(base_code_block.code_block)
+  local entity_name = json2gostruct.to_camel_case(base_code_block.meta.id)
+  print("curl_path:", curl_path, "json: ", curl_json, "entity_name: ", entity_name)
+  if curl_path then
+    table.insert(generated, string.format("// %s", base_code_block.meta.id))
+    
+    local response_code_block = request[2]
+    local response_go_struct = {}
+    if response_code_block then
+      print("CONVERTING RESPONSE CODE BLOCK", dump(response_code_block))
+      local response_json = json2gostruct.decode_json(response_code_block.code_block)
+      print("resonse_json: ", response_json)
+      response_go_struct = json2gostruct.convert_json_to_go_struct_in_memory("Response"..entity_name, response_json)
+      print("response code block lines count: ", #response_go_struct)
+    end
+
+    local base_url, path = bash_parser.parse_url(curl_path)
+
+    if curl_json then
+      -- generate post request
+      print("CONVERTING REQUEST CODE BLOCK")
+      local go_struct = json2gostruct.convert_json_to_go_struct_in_memory("Request" .. entity_name, json2gostruct.decode_json(curl_json))
+      
+      -- generate request struct code
+      for _, line in ipairs(go_struct) do
+        table.insert(generated, line)
+      end
+      table.insert(generated, "")
+    
+      -- generate responce struct code
+      if #response_go_struct > 0 then
+        for _, line in ipairs(response_go_struct) do
+          table.insert(generated, line)
+        end
+        table.insert(generated, "")
+      end
+
+      table.insert(generated, "func (i *Impl) Do" .. entity_name .. "(ctx context.Context) (error) {")
+      table.insert(generated, "\treq := Request" .. entity_name .. "{}") 
+      table.insert(generated, "\tendpoint := \"" .. path .. "\"")
+      table.insert(generated, "\treq := Response" .. entity_name .. "{}") 
+      table.insert(generated, "\t// do some logic") 
+      table.insert(generated, "\tpanic(\"not implemented\")") 
+      table.insert(generated, "}")
+    else
+      -- generate get request
+      -- generate responce struct code
+      if #response_go_struct > 0 then
+        for _, line in ipairs(response_go_struct) do
+          table.insert(generated, line)
+        end
+        table.insert(generated, "")
+      end
+
+      table.insert(generated, "func (i *Impl) Do" .. entity_name .. "(ctx context.Context) (error) {")
+      table.insert(generated, "\tendpoint := \"" .. path .. "\"")
+      table.insert(generated, "\treq := Response" .. entity_name .. "{}") 
+      table.insert(generated, "\t// do some logic") 
+      table.insert(generated, "\tpanic(\"not implemented\")") 
+      table.insert(generated, "}")
+    end
+  else
+    table.insert(generated, string.format("// curl request not detected - check it"))
+  end
 end
 
 function dump(o)

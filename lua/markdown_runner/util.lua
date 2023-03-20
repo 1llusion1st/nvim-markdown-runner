@@ -24,7 +24,7 @@ function util.get_comment_key_value(start_value, line, key)
 	local comment_symbols = {"#", "//", "\""}
 	for i, comment_symbol in ipairs(comment_symbols) do
 		-- print("comment symbol:", comment_symbol)
-		local pattern = comment_symbol .. "[ \\t]+" .. key .. ":[ \\t]+" .. "([^$]*)"
+		local pattern = comment_symbol .. "[ \t]+" .. key .. ":[ \t]+" .. "([^$]*)"
 		-- print("pattern: ", pattern)
 		local match = line:match(pattern)
 		-- print("match: ", match)
