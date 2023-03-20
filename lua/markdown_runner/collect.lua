@@ -53,6 +53,7 @@ end
 function process_request(generated, imports, request)
   print("\n\tPROCESSING REQ: " .. dump(request))
   local base_code_block = request[1]
+  base_code_block.code_block = util.replace_source_includes(base_code_block.code_block, util.getPath(vim.fn.expand('%')))
   print("meta: ", dump(base_code_block.meta))
   if base_code_block.code_lang == "go" then
     process_request_go(generated, imports, request)

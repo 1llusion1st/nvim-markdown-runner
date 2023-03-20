@@ -50,4 +50,28 @@ end
 -- print(getPath(y,"\\"))
 
 -- print("nvim_markdown_runner.util prepared")
+--
+
+function util.replace_source_includes(input_source, dir)
+  local pattern = "@@[(][/a-z0-9\\. -]+[)]"
+  while true do
+	  local match = input_source:match(pattern)
+	  if match == nil then break end
+	  
+	  local filename = dir .. '/' .. match:sub(4, -2)
+	  print("filename: ", filename)
+	  f = io.open(filename, "rb")
+	  local file_content = ""
+	  if f == nil then
+	  else
+		file_content = f:read("*a")
+		f:close()
+		if file_content:sub(#file_content, #file_content) == "\n" then
+			file_content = file_content:sub(1, #file_content - 1)
+		end
+	  end
+	  input_source = input_source:gsub(pattern, file_content)
+  end
+	return input_source
+end
 return util
