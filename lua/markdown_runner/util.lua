@@ -57,11 +57,17 @@ function util.replace_source_includes(input_source, dir)
 	-- print("INPUT: ", input_source)
   while true do
 	  local match = input_source:match(pattern)
-		print("match: ", match)
+		if vim.g.debug_print == 1 then
+			print("match: ", match)	
+		end
+		
 	  if match == nil then break end
 	  
 	  local filename = dir .. '/' .. match:sub(4, -2)
-	  print("filename: ", filename)
+		if vim.g.debug_print == 1 then
+			print("filename: ", filename)	
+		end
+ 
 	  local f = io.open(filename, "rb")
 	  local file_content = ""
 	  if f == nil then

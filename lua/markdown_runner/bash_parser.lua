@@ -5,7 +5,10 @@ local cjson = require("cjson")
 local M = {}
 
 local function parse_url(input_url)
-  print("parse_url called("..input_url..")")
+  if vim.g.debug_print == 1 then
+      print("parse_url called("..input_url..")")    
+  end
+  
   local parsed_url = url.parse(input_url)
 
   local base_url = url.build({
@@ -91,7 +94,10 @@ end
 
 -- Парсить команду curl і повертає шлях та тіло JSON
 local function parse_curl_command(curl_command)
-    print("parsing '" .. curl_command .. "'")
+    if vim.g.debug_print == 1 then
+        print("parsing '" .. curl_command .. "'")    
+    end
+    
     local url = ""
     for link in string.gmatch(curl_command, "\"(https?://[ .()@$%w-_%.%?%.:/%+=&]+)\"") do
         url = link
@@ -103,7 +109,10 @@ local function parse_curl_command(curl_command)
         json_body = find_json_havy(curl_command)
     end
     local path = url
-    print("path: ", path, "body: ", json_body)
+    if vim.g.debug_print == 1 then
+        print("path: ", path, "body: ", json_body)    
+    end
+    
     return path, json_body
 end
 

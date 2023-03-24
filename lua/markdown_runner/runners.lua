@@ -16,15 +16,22 @@ local function run_go(block)
   vim.fn.writefile(vim.split(src, "\n"), tmp)
   local dir = util.getPath(tmp)
   local filename = tmp:gsub(dir, "")
-  print("caller dir: " .. block.meta.caller_dir)
-  print("dir = " .. dir)
-  print("filename = " .. filename)
+  if vim.g.debug_print == 1 then
+    print("caller dir: " .. block.meta.caller_dir)
+    print("dir = " .. dir)
+    print("filename = " .. filename)
+  end
   vim.fn.system("cp " .. "go.mod " .. dir)
   local cmd = "bash -c \"cd " .. dir .." && export GOROOT=~/go && go mod download && go mod tidy && goimports -w " .. filename .. " \"", block.src
-  print("cmd = " .. cmd)
+  if vim.g.debug_print == 1 then
+     print("cmd = " .. cmd)
+  end
   print(vim.fn.system(cmd))
   cmd = "bash -c \"cd " .. dir .. " && go run " .. filename .. "\""
-  print("cmd = " .. cmd)
+
+  if vim.g.debug_print == 1 then
+     print("cmd = " .. cmd)
+  end
   local stdout = vim.fn.system(cmd)
   -- vim.fn.delete(tmp)
 

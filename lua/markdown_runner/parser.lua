@@ -56,7 +56,10 @@ function parser.get_code_block(line)
       caller_dir=util.getPath(vim.fn.expand('%'))
     }
   }
-  print("PARSED")
+  if vim.g.debug_print == 1 then
+    print("PARSED")  
+  end
+  
   return result
 end
 

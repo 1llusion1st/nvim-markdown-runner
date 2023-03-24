@@ -15,10 +15,15 @@ local function get_runner(block)
 end
 
 local function run(block)
-  print("run entered")
+  if vim.g.debug_print == 1 then
+    print("run entered")  
+  end
+  
   local runner = get_runner(block)
-  print("runner: ", runner)
-
+  if vim.g.debug_print == 1 then
+    print("runner: ", runner)  
+  end
+  
   local input_source = table.concat(block.src, "\n")
 
   local pattern = "@@[(][/a-z0-9\\. -]+[)]"
@@ -27,7 +32,10 @@ local function run(block)
 	  if match == nil then break end
 	  
 	  local filename = block.meta.caller_dir .. match:sub(4, -2)
-	  print("filename: ", filename)
+    if vim.g.debug_print == 1 then
+      print("filename: ", filename)  
+    end
+	  
 	  local f = io.open(filename, "rb")
 	  local file_content = ""
 	  if f == nil then
@@ -41,33 +49,62 @@ local function run(block)
 	  input_source = input_source:gsub(pattern, file_content, 1)
   end
 
-  print(input_source)
+  if vim.g.debug_print == 1 then
+    print(input_source)  
+  end
+  
   local lines = {}
   for s in input_source:gmatch("[^\r\n]+") do
     table.insert(lines, s)
   end
-  print("block.meta.caller_dir = " .. block.meta.caller_dir)
+  if vim.g.debug_print == 1 then
+    print("block.meta.caller_dir = " .. block.meta.caller_dir)  
+  end
+  
   block.src = lines
   local current_dir = vim.fn.getcwd()
-  print("starting working dir running cwd:", current_dir)
-  local new_cwd_path = ""
-  print("block.meta.caller_dir[1] = " .. block.meta.caller_dir:sub(1, 1))
-  if block.meta.caller_dir:sub(1, 1) == '/' then
-	print("dirrect path")
-	local new_cwd_path = block.meta.caller_dir
-  else
-	print("path with prefix")
-	new_cwd_path = current_dir .. "/" .. block.meta.caller_dir
+  if vim.g.debug_print == 1 then
+    print("starting working dir running cwd:", current_dir)  
   end
-  print("moving to " .. new_cwd_path)
+  
+  local new_cwd_path = ""
+  if vim.g.debug_print == 1 then
+    print("block.meta.caller_dir[1] = " .. block.meta.caller_dir:sub(1, 1))  
+  end
+  
+  if block.meta.caller_dir:sub(1, 1) == '/' then
+    if vim.g.debug_print == 1 then
+      print("dirrect path")  
+    end
+    
+    new_cwd_path = block.meta.caller_dir
+  else
+    if vim.g.debug_print == 1 then
+      print("path with prefix")  
+    end
+    
+    new_cwd_path = current_dir .. "/" .. block.meta.caller_dir
+  end
+  if vim.g.debug_print == 1 then
+    print("moving to " .. new_cwd_path)  
+  end
+  
   vim.api.nvim_set_current_dir(new_cwd_path)
-  print("before running:", vim.fn.getcwd())
-
+  if vim.g.debug_print == 1 then
+    print("before running:", vim.fn.getcwd())  
+  end
+  
   local resp = ""
   if type(runner) == "string" then
-    print("running string cmd")
+    if vim.g.debug_print == 1 then
+      print("running string cmd")
+    end
+    
     resp = vim.fn.system(runner, block.src)
-    print("has run string cmd")
+    if vim.g.debug_print == 1 then
+      print("has run string cmd")  
+    end
+    
   elseif type(runner) == "function" then
     resp = runner(block)
     if string.sub(resp, -1, -1) ~= "\n" then
@@ -78,7 +115,10 @@ local function run(block)
   end
   vim.api.nvim_set_current_dir(current_dir)
   local current_dir = vim.fn.getcwd()
-  print("after running cwd:", current_dir)
+  if vim.g.debug_print == 1 then
+    print("after running cwd:", current_dir)  
+  end
+  
   return resp
 end
 
@@ -87,16 +127,25 @@ local function echo()
 end
 
 local function insert()
-  print("insert entered")
+  if vim.g.debug_print == 1 then
+    print("insert entered")  
+  end
+  
   -- print("getting code block")
   local block = parser.get_code_block()
-  print("got code block")
+  if vim.g.debug_print == 1 then
+    print("got code block")  
+  end
+  
   local outformat = "text"
   if block.meta.outformat ~= "" then
     outformat = block.meta.outformat
   end
-  print("block: ", block.meta.outfile, block.meta.outformat, block.meta.block_id, block.meta.post_cmd, block.meta.caller, block.meta.caller_dir)
-  -- print("outformat: ", outformat)
+  if vim.g.debug_print == 1 then
+    print("block: ", block.meta.outfile, block.meta.outformat, block.meta.block_id, block.meta.post_cmd, block.meta.caller, block.meta.caller_dir)   
+    print("outformat: ", outformat)
+  end
+  
 
   local block_content = run(block)
   local content = "\n```" .. outformat .. " markdown-runner\n" .. block_content .. "\n```"
@@ -123,9 +172,15 @@ local function insert()
     local executed
     local ret
     local code
-    print("running post cmd: " .. command)
+    if vim.g.debug_print == 1 then
+      print("running post cmd: " .. command)  
+    end
+    
 	  executed, ret, code = os.execute(command)
-    print("ret code: ", code)
+    if vim.g.debug_print == 1 then
+      print("ret code: ", code)  
+    end
+    
 	  if code ~= 0 and code ~= nil then
 		  print("error running command: " .. command .. " code: ", code)
 	  end

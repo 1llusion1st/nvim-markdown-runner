@@ -7,8 +7,10 @@ local bash_parser = require "markdown_runner.bash_parser"
 local collector = {}
 
 function collector.collect(params)
-  print("callect called with params: " .. params)
-
+  if vim.g.debug_print == 1 then
+    print("callect called with params: " .. params)
+  end
+  
   local current_buffer = api.nvim_get_current_buf()
   local text = table.concat(api.nvim_buf_get_lines(current_buffer, 0, -1, false), "\n")
   -- print("processing lines:", #(vim.split(text, "\n")))
@@ -23,8 +25,10 @@ function collector.collect(params)
   local request = nil
 
   for i, request in ipairs(requests) do
-    print("processing req: ", dump(request))
-    
+    if vim.g.debug_print == 1 then
+       print("processing req: ", dump(request))
+    end
+        
     process_request(generated, imports, request)
   end
   api.nvim_command("vnew")
@@ -44,17 +48,25 @@ function collector.collect(params)
     table.insert(lines, line)
   end
   table.insert(lines, "")
-
-  print("lines:", dump(lines))
+  
+  if vim.g.debug_print == 1 then
+    print("lines:", dump(lines))  
+  end
 
   api.nvim_buf_set_lines(new_buffer, 0, -1, false, lines)
 end
 
 function process_request(generated, imports, request)
-  print("\n\tPROCESSING REQ: " .. dump(request))
+  if vim.g.debug_print == 1 then
+   print("\n\tPROCESSING REQ: " .. dump(request))
+  end
+
   local base_code_block = request[1]
   base_code_block.code_block = util.replace_source_includes(base_code_block.code_block, util.getPath(vim.fn.expand('%')))
-  print("meta: ", dump(base_code_block.meta))
+  if vim.g.debug_print == 1 then
+    print("meta: ", dump(base_code_block.meta))  
+  end
+ 
   if base_code_block.code_lang == "go" then
     process_request_go(generated, imports, request)
   elseif base_code_block.code_lang == "bash" then
@@ -63,11 +75,17 @@ function process_request(generated, imports, request)
     local code_lang = string.format("%s", base_code_block.code_lang)
     table.insert(generated, "// unsupported code-block type: " .. code_lang .. " for request id: " .. base_code_block.meta.id)
   end
-  print("PROCESSED REQ!")
+  if vim.g.debug_print == 1 then
+    print("PROCESSED REQ!")  
+  end
+
 end
 
 function process_request_go(generated, imports, request)
-  print("processing GO CODE BLOCK: " .. dump(request))
+  if vim.g.debug_print == 1 then
+    print("processing GO CODE BLOCK: " .. dump(request))  
+  end
+
   local base_code_block = request[1]
   local block_imports, code = go_parser.parse(base_code_block.code_block, true)
   for _, import in ipairs(block_imports) do
@@ -81,29 +99,47 @@ function process_request_go(generated, imports, request)
 end
 
 function process_request_bash(generated, request)
-  print("PROCESSING BASH !!!!!!!!!!!")
+  if vim.g.debug_print == 1 then
+    print("PROCESSING BASH !!!!!!!!!!!")  
+  end
+
   local base_code_block = request[1]
   local curl_path, curl_json = bash_parser.find_curl_command(base_code_block.code_block)
   local entity_name = json2gostruct.to_camel_case(base_code_block.meta.id)
-  print("curl_path:", curl_path, "json: ", curl_json, "entity_name: ", entity_name)
+  if vim.g.debug_print == 1 then
+    print("curl_path:", curl_path, "json: ", curl_json, "entity_name: ", entity_name)  
+  end
+
   if curl_path then
     table.insert(generated, string.format("// %s", base_code_block.meta.id))
     
     local response_code_block = request[2]
     local response_go_struct = {}
     if response_code_block then
-      print("CONVERTING RESPONSE CODE BLOCK", dump(response_code_block))
+      if vim.g.debug_print == 1 then
+        print("CONVERTING RESPONSE CODE BLOCK", dump(response_code_block))  
+      end
+
       local response_json = json2gostruct.decode_json(response_code_block.code_block)
-      print("resonse_json: ", response_json)
+      if vim.g.debug_print == 1 then
+        print("resonse_json: ", response_json)  
+      end
+
       response_go_struct = json2gostruct.convert_json_to_go_struct_in_memory("Response"..entity_name, response_json)
-      print("response code block lines count: ", #response_go_struct)
+      if vim.g.debug_print == 1 then
+        print("response code block lines count: ", #response_go_struct)  
+      end
+
     end
 
     local base_url, path = bash_parser.parse_url(curl_path)
 
     if curl_json then
       -- generate post request
-      print("CONVERTING REQUEST CODE BLOCK")
+      if vim.g.debug_print == 1 then
+        print("CONVERTING REQUEST CODE BLOCK")  
+      end
+
       local go_struct = json2gostruct.convert_json_to_go_struct_in_memory("Request" .. entity_name, json2gostruct.decode_json(curl_json))
       
       -- generate request struct code
@@ -181,7 +217,10 @@ function extract_requests(text)
     local code_blocks = extract_code_blocks(request_block)
     if #code_blocks > 0 then
       table.insert(requests, code_blocks)
-      print("REQ: ", dump(code_blocks))
+      if vim.g.debug_print == 1 then
+       print("REQ: ", dump(code_blocks))   
+      end
+
     end
     text = text:sub(end_req + #END_REQ)
   end
@@ -212,7 +251,9 @@ function extract_code_blocks(text)
         meta = extract_info_from_code_block(code_block)
       })
   end
-  print("code_blocks count: ", #code_blocks)
+  if vim.g.debug_print == 1 then
+    print("code_blocks count: ", #code_blocks)  
+  end
   return code_blocks
 end
 
