@@ -15,7 +15,9 @@ local function get_runner(block)
 end
 
 local function run(block)
+  print("run entered")
   local runner = get_runner(block)
+  print("runner: ", runner)
 
   local input_source = table.concat(block.src, "\n")
 
@@ -26,17 +28,17 @@ local function run(block)
 	  
 	  local filename = block.meta.caller_dir .. match:sub(4, -2)
 	  print("filename: ", filename)
-	  f = io.open(filename, "rb")
+	  local f = io.open(filename, "rb")
 	  local file_content = ""
 	  if f == nil then
 	  else
-		file_content = f:read("*a")
-		f:close()
-		if file_content:sub(#file_content, #file_content) == "\n" then
-			file_content = file_content:sub(1, #file_content - 1)
-		end
+      file_content = f:read("*a")
+      f:close()
+      if file_content:sub(#file_content, #file_content) == "\n" then
+        file_content = file_content:sub(1, #file_content - 1)
+      end
 	  end
-	  input_source = input_source:gsub(pattern, file_content)
+	  input_source = input_source:gsub(pattern, file_content, 1)
   end
 
   print(input_source)
@@ -52,7 +54,7 @@ local function run(block)
   print("block.meta.caller_dir[1] = " .. block.meta.caller_dir:sub(1, 1))
   if block.meta.caller_dir:sub(1, 1) == '/' then
 	print("dirrect path")
-	new_cwd_path = block.meta.caller_dir
+	local new_cwd_path = block.meta.caller_dir
   else
 	print("path with prefix")
 	new_cwd_path = current_dir .. "/" .. block.meta.caller_dir
@@ -75,7 +77,7 @@ local function run(block)
     error("Invalid command type")
   end
   vim.api.nvim_set_current_dir(current_dir)
-  current_dir = vim.fn.getcwd()
+  local current_dir = vim.fn.getcwd()
   print("after running cwd:", current_dir)
   return resp
 end
@@ -85,9 +87,10 @@ local function echo()
 end
 
 local function insert()
+  print("insert entered")
   -- print("getting code block")
   local block = parser.get_code_block()
-  -- print("got code block")
+  print("got code block")
   local outformat = "text"
   if block.meta.outformat ~= "" then
     outformat = block.meta.outformat
@@ -117,7 +120,12 @@ local function insert()
 
   if block.meta.post_cmd ~= "" then
 	  local command = "cd " .. block.meta.caller_dir .. " && " .. block.meta.post_cmd
+    local executed
+    local ret
+    local code
+    print("running post cmd: " .. command)
 	  executed, ret, code = os.execute(command)
+    print("ret code: ", code)
 	  if code ~= 0 and code ~= nil then
 		  print("error running command: " .. command .. " code: ", code)
 	  end

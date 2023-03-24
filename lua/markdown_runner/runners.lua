@@ -1,5 +1,6 @@
 local api = vim.api
 local util = require "markdown_runner.util"
+local sql_runner = require "markdown_runner.sql_runner"
 
 local function run_go(block)
   local tmp = vim.fn.tempname() .. ".go"
@@ -133,6 +134,7 @@ local runners = {
   go = run_go,
   vim = run_vim,
   api = run_api,
+  sql = sql_runner.run_sql
 }
 
 return runners

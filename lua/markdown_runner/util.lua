@@ -21,7 +21,7 @@ end
 
 function util.get_comment_key_value(start_value, line, key)
 	if start_value ~= "" then return start_value end
-	local comment_symbols = {"#", "//", "\""}
+	local comment_symbols = {"#", "//", "\"", "--"}
 	for i, comment_symbol in ipairs(comment_symbols) do
 		-- print("comment symbol:", comment_symbol)
 		local pattern = comment_symbol .. "[ \t]+" .. key .. ":[ \t]+" .. "([^$]*)"
@@ -54,23 +54,27 @@ end
 
 function util.replace_source_includes(input_source, dir)
   local pattern = "@@[(][/a-z0-9\\. -]+[)]"
+	-- print("INPUT: ", input_source)
   while true do
 	  local match = input_source:match(pattern)
+		print("match: ", match)
 	  if match == nil then break end
 	  
 	  local filename = dir .. '/' .. match:sub(4, -2)
 	  print("filename: ", filename)
-	  f = io.open(filename, "rb")
+	  local f = io.open(filename, "rb")
 	  local file_content = ""
 	  if f == nil then
+			-- ignore
 	  else
-		file_content = f:read("*a")
-		f:close()
-		if file_content:sub(#file_content, #file_content) == "\n" then
-			file_content = file_content:sub(1, #file_content - 1)
-		end
+			file_content = f:read("*a")
+			f:close()
+			if file_content:sub(#file_content, #file_content) == "\n" then
+				file_content = file_content:sub(1, #file_content - 1)
+			end
 	  end
-	  input_source = input_source:gsub(pattern, file_content)
+	  input_source = input_source:gsub(pattern, file_content, 1)
+		-- print("INPUT AFTER GSUB:", input_source)
   end
 	return input_source
 end

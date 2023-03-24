@@ -41,20 +41,23 @@ function parser.get_code_block(line)
 
   assert(#lines > 0, "code block is empty")
 
-  return {
+  local result = {
     start_line=s,
     end_line=e,
     cmd=string.match(start_line, "^```(%S+)"),
+    arguments=string.match(start_line, "```%S+ (%S+)"),
     src=lines,
     meta={
-	outfile=outfile,
-	outformat=outformat,
-	post_cmd=post_cmd,
-	block_id=block_id,
-	caller=vim.fn.expand('%'),
-	caller_dir=util.getPath(vim.fn.expand('%'))
+      outfile=outfile,
+      outformat=outformat,
+      post_cmd=post_cmd,
+      block_id=block_id,
+      caller=vim.fn.expand('%'),
+      caller_dir=util.getPath(vim.fn.expand('%'))
     }
   }
+  print("PARSED")
+  return result
 end
 
 -- print("nvim_markdown_runner.parser prepared")
